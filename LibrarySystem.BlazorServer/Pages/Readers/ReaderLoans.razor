@@ -1,0 +1,87 @@
+﻿@page "/reader/loans/{id:int}"
+@using LibrarySystem.Application.Services.Interfaces
+@using LibrarySystem.SharedKernel.DTOs
+
+@inject IReaderService _readerService
+@inject NavigationManager _navigationManager
+@inject ILogger<ReaderLoans> _logger
+
+<PageTitle>Reader Loans</PageTitle>
+<h1>Loans for Reader</h1>
+
+<button class="btn btn-secondary" @onclick="ShowAllLoans">Show All Loans</button>
+<button class="btn btn-primary" @onclick="ShowActiveLoans">Show Active Loans</button>
+
+@if (_loans == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Book Title</th>
+                <th>Loan Date</th>
+                <th>Return Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var loan in _loans)
+            {
+                <tr>
+                    <td>@loan.Book.Title</td>
+                    <td>@loan.LoanDate.ToShortDateString()</td>
+                    <td>@(loan.ReturnDate.HasValue ? loan.ReturnDate.Value.ToShortDateString() : "Not Returned")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private IEnumerable<LoanDTO> _loans;
+    private bool _showActiveOnly = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadLoans();
+            _logger.LogInformation("Successfully loaded loans for reader with ID: {Id}", Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading loans for reader with ID: {Id}", Id);
+        }
+    }
+
+    private async Task LoadLoans()
+    {
+        if (_showActiveOnly)
+        {
+            _loans = await _readerService.GetActiveLoansByReaderId(Id);
+        }
+        else
+        {
+            _loans = await _readerService.GetLoansByReaderId(Id);
+        }
+    }
+
+    private async Task ShowAllLoans()
+    {
+        _showActiveOnly = false;
+        await LoadLoans();
+        _logger.LogInformation("Displayed all loans for reader with ID: {Id}", Id);
+    }
+
+    private async Task ShowActiveLoans()
+    {
+        _showActiveOnly = true;
+        await LoadLoans();
+        _logger.LogInformation("Displayed active loans for reader with ID: {Id}", Id);
+    }
+}

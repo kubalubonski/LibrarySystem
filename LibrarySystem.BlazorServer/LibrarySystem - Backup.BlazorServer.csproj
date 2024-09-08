@@ -11,9 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blazored.FluentValidation" Version="2.2.0" />
+    <Folder Include="Pages\Books\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MudBlazor" Version="7.8.0" />
-    <PackageReference Include="Radzen.Blazor" Version="5.1.9" />
   </ItemGroup>
 
 </Project>

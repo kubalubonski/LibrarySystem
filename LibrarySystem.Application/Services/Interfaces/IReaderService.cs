@@ -11,5 +11,6 @@ namespace LibrarySystem.Application.Services.Interfaces
         Task<bool> DeleteReader(int id);
         Task<IEnumerable<LoanDTO>> GetLoansByReaderId(int readerId);
         Task<IEnumerable<LoanDTO>> GetActiveLoansByReaderId(int readerId);
+        Task<bool> ReaderExistsByName(string name);
     }
 }

@@ -1,0 +1,119 @@
+﻿@page "/reader"
+@using LibrarySystem.Application.Services.Interfaces
+@using LibrarySystem.SharedKernel.DTOs
+
+@inject IReaderService _readerService
+@inject IJSRuntime _js
+@inject NavigationManager _navigationManager
+@inject ILogger<ReaderList> _logger
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic-bootstrap.min.css" rel="stylesheet" />
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+
+<PageTitle>Reader List</PageTitle>
+<h1>Readers</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="CreateReader">
+        <span class="oi oi-plus" aria-hidden="true"></span> Add New Reader
+    </button>
+</div>
+
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Avatar</th>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var reader in _readers)
+            {
+                <tr>
+                    <td>
+                        <img src="@GetRandomAvatar(reader.Id)" alt="Avatar" width="50" height="50" style="border-radius: 50%;" />
+                    </td>
+                    <td>@reader.Name</td>
+                    <td>
+                        <button class="btn btn-info" @onclick="() => ViewLoans(reader.Id)">
+                            <span class="oi oi-eye" aria-hidden="true"></span>
+                            View Loans
+                        </button>
+                        <button class="btn btn-warning" @onclick="() => EditReader(reader.Id)">
+                            <span class="oi oi-pencil" aria-hidden="true"></span>
+                            Edit
+                        </button>
+                        <button class="btn btn-danger" @onclick="() => DeleteReader(reader.Id)">
+                            <span class="oi oi-trash" aria-hidden="true"></span>
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private IEnumerable<ReaderDTO> _readers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _readers = await _readerService.GetReaders();
+            _logger.LogInformation("Successfully retrieved readers list.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving readers list.");
+        }
+    }
+    private string GetRandomAvatar(int readerId)
+    {
+        var randomId = readerId % 100;
+        return $"https://i.pravatar.cc/150?img={randomId}"; 
+    }
+
+    private void CreateReader()
+    {
+        _logger.LogInformation("Navigating to create new reader page.");
+        _navigationManager.NavigateTo("reader/create");
+    }
+
+    private async Task DeleteReader(int id)
+    {
+        var reader = _readers.FirstOrDefault(r => r.Id == id);
+        if (reader != null)
+        {
+            var confirm = await _js.InvokeAsync<bool>("confirm", $"Are you sure you want to delete the reader '{reader.Name}'?");
+            if (confirm)
+            {
+                try
+                {
+                    await _readerService.DeleteReader(id);
+                    _readers = await _readerService.GetReaders();
+                    _logger.LogInformation("Successfully deleted reader with ID: {Id}", id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error deleting reader with ID: {Id}", id);
+                }
+            }
+        }
+    }
+
+    private void EditReader(int id)
+    {
+        _logger.LogInformation("Navigating to edit page for reader with ID: {Id}", id);
+        _navigationManager.NavigateTo($"reader/edit/{id}");
+    }
+
+    private void ViewLoans(int id)
+    {
+        _logger.LogInformation("Navigating to view loans page for reader with ID: {Id}", id);
+        _navigationManager.NavigateTo($"reader/loans/{id}");
+    }
+}

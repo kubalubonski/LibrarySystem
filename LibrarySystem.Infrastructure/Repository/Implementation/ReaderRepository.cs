@@ -62,5 +62,9 @@ namespace LibrarySystem.Domain.Concrats.Implementation
                                  .Include(l => l.Book)
                                  .ToListAsync();
         }
+        public async Task<bool> ReaderExistsByName(string name)
+        {
+            return await _context.Readers.AnyAsync(r => r.Name == name);
+        }
     }
 }

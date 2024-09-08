@@ -1,4 +1,5 @@
 ﻿using LibrarySystem.Application.Services.Interfaces;
+using LibrarySystem.Server.Application.Implementation;
 using LibrarySystem.SharedKernel.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,6 +37,11 @@ namespace LibrarySystem.WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ReaderDTO>> AddReader(ReaderDTO readerDto)
         {
+            var exists = await _readerService.ReaderExistsByName(readerDto.Name);
+            if (exists)
+            {
+                return BadRequest("Reader with this name already exists.");
+            }
             var addedReader = await _readerService.AddReader(readerDto);
             return Ok(addedReader);
         }
@@ -43,6 +49,11 @@ namespace LibrarySystem.WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateReader(int id, ReaderDTO readerDto)
         {
+            var exists = await _readerService.ReaderExistsByName(readerDto.Name);
+            if (exists && (await _readerService.GetReaderById(id)).Name != readerDto.Name)
+            {
+                return BadRequest("Reader with this name already exists.");
+            }
             var updatedReader = await _readerService.UpdateReader(id, readerDto);
             if (updatedReader == null)
             {
@@ -75,5 +86,14 @@ namespace LibrarySystem.WebAPI.Controllers
             var activeLoans = await _readerService.GetActiveLoansByReaderId(id);
             return Ok(activeLoans);
         }
-    }
+
+        [HttpGet("exist")]
+        public async Task<ActionResult<bool>> ReaderExistsByName(string name)
+        {
+            var exists = await _readerService.ReaderExistsByName(name);
+            return Ok(exists);
+
+        }
+       
+}
 }

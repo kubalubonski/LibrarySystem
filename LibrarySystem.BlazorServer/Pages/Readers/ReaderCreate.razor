@@ -1,0 +1,63 @@
+﻿@page "/reader/create"
+@inject IReaderService _readerService
+@using Blazored.FluentValidation
+@inject NavigationManager _navigationManager
+@inject ILogger<ReaderCreate> _logger
+
+<PageTitle>Create Reader</PageTitle>
+<h1>Create Reader</h1>
+
+<EditForm Model="@_reader" OnValidSubmit="@CreateReader">
+    <FluentValidationValidator @ref="_fluentValidationValidator" DisableAssemblyScanning="@true" />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" @bind-Value="_reader.Name" class="form-control" />
+        <ValidationMessage For="@(() => _reader.Name)" />
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="text-danger">@_errorMessage</div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    private ReaderDTO _reader = new ReaderDTO();
+    private string _errorMessage;
+    private FluentValidationValidator? _fluentValidationValidator;
+
+    private async Task CreateReader()
+    {
+        try
+        {
+            _logger.LogInformation("Attempting to create reader with name: {Name}", _reader.Name);
+
+            var exists = await _readerService.ReaderExistsByName(_reader.Name);
+            if (exists)
+            {
+                _errorMessage = "A reader with this name already exists.";
+                _logger.LogWarning("Reader with name {Name} already exists.", _reader.Name);
+                return;
+            }
+
+            await _readerService.AddReader(_reader);
+            _logger.LogInformation("Successfully created reader with name: {Name}", _reader.Name);
+
+            _navigationManager.NavigateTo("/reader");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating reader with name: {Name}", _reader.Name);
+        }
+    }
+
+    private void Cancel()
+    {
+        _logger.LogInformation("Cancel button clicked while creating reader.");
+        _navigationManager.NavigateTo("/reader");
+    }
+}

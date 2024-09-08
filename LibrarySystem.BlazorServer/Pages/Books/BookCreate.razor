@@ -1,0 +1,63 @@
+﻿@page "/book/create"
+@using Blazored.FluentValidation
+@inject IBookService _bookService
+@inject NavigationManager _navigationManager
+@inject ILogger _logger
+
+<link href="https://cdn.jsdelivr.net/npm/radzen-blazor@4.7.6/dist/radzen-blazor.min.css" rel="stylesheet" />
+<PageTitle>Create Book</PageTitle>
+<h1>Create Book</h1>
+
+<EditForm Model="@_book" OnValidSubmit="@CreateBook">
+    <FluentValidationValidator @ref="_fluentValidationValidator" DisableAssemblyScanning="@true" />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="title">Title:</label>
+        <InputText id="title" @bind-Value="_book.Title" class="form-control" />
+        <ValidationMessage For="@(() => _book.Title)" />
+    </div>
+
+    <div class="form-group">
+        <label for="year">Year:</label>
+        <InputNumber id="year" @bind-Value="_book.Year" class="form-control" />
+        <ValidationMessage For="@(() => _book.Year)" />
+    </div>
+
+    <div class="form-group">
+        <label for="author">Author:</label>
+        <InputText id="author" @bind-Value="_book.Author.Name" class="form-control" />
+        <ValidationMessage For="@(() => _book.Author.Name)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    private BookDTO _book = new BookDTO();
+    private FluentValidationValidator _fluentValidationValidator;
+
+    private async Task CreateBook()
+    {
+        try
+        {
+            _logger.LogInformation("Attempting to create a book with title: {Title}", _book.Title);
+
+            var createdBook = await _bookService.AddBook(_book);
+            _logger.LogInformation("Successfully created book with title: {Title}", _book.Title);
+
+            _navigationManager.NavigateTo("/book");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating book with title: {Title}", _book.Title);
+        }
+    }
+
+    private void Cancel()
+    {
+        _logger.LogInformation("Creation of book was canceled.");
+        _navigationManager.NavigateTo("/book");
+    }
+}

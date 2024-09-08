@@ -1,0 +1,78 @@
+﻿@page "/book/edit/{id:int}"
+@using Blazored.FluentValidation
+@inject IBookService _bookService
+@inject NavigationManager _navigationManager
+@inject ILogger<BookEdit> _logger
+
+<PageTitle>Edit Book</PageTitle>
+<h1>Edit Book</h1>
+
+<EditForm Model="@_book" OnValidSubmit="@UpdateBook">
+    <FluentValidationValidator @ref="_fluentValidationValidator" DisableAssemblyScanning="@true" />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="title">Title:</label>
+        <InputText id="title" @bind-Value="_book.Title" class="form-control" />
+        <ValidationMessage For="@(() => _book.Title)" />
+    </div>
+
+    <div class="form-group">
+        <label for="year">Year:</label>
+        <InputNumber id="year" @bind-Value="_book.Year" class="form-control" />
+        <ValidationMessage For="@(() => _book.Year)" />
+    </div>
+
+    <div class="form-group">
+        <label for="author">Author:</label>
+        <InputText id="author" @bind-Value="_book.Author.Name" class="form-control" />
+        <ValidationMessage For="@(() => _book.Author.Name)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private BookDTO _book;
+    private FluentValidationValidator _fluentValidationValidator;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Fetching book with ID {Id}", Id);
+            _book = await _bookService.GetBookById(Id);
+            _logger.LogInformation("Successfully fetched book with ID {Id}", Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching book with ID {Id}", Id);
+            _navigationManager.NavigateTo("/error");
+        }
+    }
+
+    private async Task UpdateBook()
+    {
+        try
+        {
+            _logger.LogInformation("Updating book with ID {Id}", Id);
+            await _bookService.UpdateBook(Id, _book);
+            _logger.LogInformation("Successfully updated book with ID {Id}", Id);
+            _navigationManager.NavigateTo("/book");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating book with ID {Id}", Id);
+        }
+    }
+
+    private void Cancel()
+    {
+        _logger.LogInformation("Cancel button clicked for book edit with ID {Id}", Id);
+        _navigationManager.NavigateTo("/book");
+    }
+}

@@ -1,0 +1,96 @@
+﻿@page "/book"
+@using LibrarySystem.Application.Services.Interfaces
+@using LibrarySystem.SharedKernel.DTOs
+
+@inject IBookService _bookService
+@inject IJSRuntime _js
+@inject NavigationManager _navigationManager
+@inject ILogger<BookList> _logger
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic-bootstrap.min.css" rel="stylesheet" />
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+
+<PageTitle>BookList</PageTitle>
+<h1>Books</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="CreateBook">
+        <span class="oi oi-plus" aria-hidden="true"></span> Add New Book
+    </button>
+</div>
+
+<div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Year</th>
+                <th>Author</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in _bookList)
+            {
+                <tr>
+                    <td>@b.Title</td>
+                    <td>@b.Year</td>
+                    <td>@b.Author.Name</td>
+                    <td>
+                        <button class="btn bg-warning" @onclick="@(() => EditBook(b.Id))">
+                            <span class="oi oi-pencil" aria-hidden="true"></span>
+                            Edit
+                        </button>
+                        <button class="btn bg-danger" @onclick="() => DeleteBook(b.Id)"> Delete </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private IEnumerable<BookDTO> _bookList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _bookList = await _bookService.GetBooks();
+            _logger.LogInformation("Successfully retrieved list of books.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving list of books.");
+        }
+    }
+
+    private async Task DeleteBook(int id)
+    {
+        var book = _bookList.First(p => p.Id == id);
+        var confirm = await _js.InvokeAsync<bool>("confirm", $"Are you sure to delete this book '{book.Title}'?");
+        if (confirm)
+        {
+            try
+            {
+                await _bookService.DeleteBook(id);
+                _logger.LogInformation("Successfully deleted book with title: {Title}", book.Title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting book with title: {Title}", book.Title);
+            }
+        }
+    }
+
+    private void EditBook(int id)
+    {
+        _logger.LogInformation("Navigating to edit page for book with ID: {Id}", id);
+        _navigationManager.NavigateTo($"book/edit/{id}");
+    }
+
+    private void CreateBook()
+    {
+        _logger.LogInformation("Navigating to create new book page.");
+        _navigationManager.NavigateTo("book/create");
+    }
+}

@@ -142,5 +142,10 @@ namespace LibrarySystem.Server.Application.Implementation
 
             return loanDtos;
         }
+
+        public async Task<bool> ReaderExistsByName(string name)
+        {
+            return await _readerRepository.ReaderExistsByName(name);
+        }
     }
 }

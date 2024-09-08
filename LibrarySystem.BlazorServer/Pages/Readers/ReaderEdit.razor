@@ -1,0 +1,79 @@
+﻿@page "/reader/edit/{id:int}"
+@using Blazored.FluentValidation
+@inject IReaderService _readerService
+@inject NavigationManager _navigationManager
+@inject ILogger<ReaderEdit> _logger
+
+<PageTitle>Edit Reader</PageTitle>
+<h1>Edit Reader</h1>
+
+<EditForm Model="@_reader" OnValidSubmit="@UpdateReader">
+    <FluentValidationValidator @ref="_fluentValidationValidator" DisableAssemblyScanning="@true" />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" @bind-Value="_reader.Name" class="form-control" />
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="text-danger">@_errorMessage</div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ReaderDTO _reader = new ReaderDTO();
+    private string _errorMessage;
+    private FluentValidationValidator? _fluentValidationValidator;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Fetching reader with ID {Id}", Id);
+            _reader = await _readerService.GetReaderById(Id) ?? new ReaderDTO();
+            _logger.LogInformation("Successfully fetched reader with ID {Id}", Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching reader with ID {Id}", Id);
+            _navigationManager.NavigateTo("/error");
+        }
+    }
+
+    private async Task UpdateReader()
+    {
+        try
+        {
+            _logger.LogInformation("Checking if reader with name {Name} exists", _reader.Name);
+            var exists = await _readerService.ReaderExistsByName(_reader.Name);
+            if (exists)
+            {
+                _errorMessage = "A reader with this name already exists.";
+                _logger.LogWarning("Reader with name {Name} already exists", _reader.Name);
+                return;
+            }
+
+            _logger.LogInformation("Updating reader with ID {Id}", Id);
+            await _readerService.UpdateReader(Id, _reader);
+            _logger.LogInformation("Successfully updated reader with ID {Id}", Id);
+            _navigationManager.NavigateTo("/reader");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating reader with ID {Id}", Id);
+        }
+    }
+
+    private void Cancel()
+    {
+        _logger.LogInformation("Cancel button clicked for reader edit with ID {Id}", Id);
+        _navigationManager.NavigateTo("/reader");
+    }
+}

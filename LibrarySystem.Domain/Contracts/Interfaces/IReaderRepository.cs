@@ -12,5 +12,6 @@ namespace LibrarySystem.Domain.Concrats.Interfaces
         Task DeleteReader(int id);
         Task<IEnumerable<Loan>> GetLoansByReaderId(int readerId);
         Task<IEnumerable<Loan>> GetActiveLoansByReaderId(int readerId);
+        Task<bool> ReaderExistsByName(string name);
     }
 }
