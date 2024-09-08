@@ -1,0 +1,57 @@
+﻿@page "/books"
+@using LibrarySystem.SharedKernel.DTOs
+@using LibrarySystem.BlazorClient.Services
+@inject IBookService _bookService
+@inject ILogger<BookList> Logger
+
+<PageTitle>Books</PageTitle>
+
+<h1>Books</h1>
+
+@if (_books == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!_books.Any())
+{
+    <p>No books found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in _books)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Author.Name</td>
+                    <td>@book.Year</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<BookDTO> _books;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _books = await _bookService.GetAll();
+            Logger.LogInformation("Successfully retrieved books.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error retrieving books.");
+        }
+    }
+}

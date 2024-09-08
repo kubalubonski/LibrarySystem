@@ -66,7 +66,10 @@ try
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"),
             b => b.MigrationsAssembly("LibrarySystem.Infrastructure")));
 
-
+    builder.Services.AddCors(o => o.AddPolicy("LibrarySystem", builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    }));
 
     var app = builder.Build();
 
@@ -76,7 +79,7 @@ try
         app.UseSwagger();
         app.UseSwaggerUI();
     }
-
+    app.UseCors("LibrarySystem");
     app.UseMiddleware<ExceptionMiddleware>();
 
     app.UseHttpsRedirection();
